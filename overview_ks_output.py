@@ -1,14 +1,17 @@
 #%%
 import numpy as np
 import pandas as pd
-from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib import gridspec, rcParams
+import pathlib   
+temp = pathlib.PosixPath   
+pathlib.PosixPath = pathlib.WindowsPath
 
 #%% 
 # outputs saved to results_dir
-results_dir = Path(r"E:\25082023_Toblerone_StrCer_S3_g0\25082023_Toblerone_StrCer_S3_g0_imec0\catGT\kilosort4")
-ops = np.load(results_dir / 'ops.npy', allow_pickle=True).item()
+results_dir = pathlib.WindowsPath(r"E:\25082023_Toblerone_StrCer_S3_g0\25082023_Toblerone_StrCer_S3_g0_imec0\catGT\kilosort4")
+ops_file = results_dir / 'ops.npy'
+ops = np.load(ops_file, allow_pickle=True).item()
 contam_pct = pd.read_csv(results_dir / 'cluster_ContamPct.tsv', sep='\t')['ContamPct'].values
 chan_map =  np.load(results_dir / 'channel_map.npy')
 templates =  np.load(results_dir / 'templates.npy')
