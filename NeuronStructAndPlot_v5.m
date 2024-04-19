@@ -4,7 +4,7 @@ clear; close all; clc
 
 %% Manage paths
 %person = 'teresa';
-person = 'simon';
+person = 'teresa';
 if strcmp(person,'teresa')
     behavior_root ='D:\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\data\TD\behavior_data\raw_data';
     ephys_root = 'E:\'; %group_ephys = '20230801_ChocolateGroup';
@@ -16,13 +16,13 @@ end
 group_setup_behav = strcat('20230511_ChocolateGroup',filesep,'headfixed_dynamicTarget');
 
 % IDs and Definitions
-mouse = '2_Lindt';
+mouse = '3_Toblerone';
 paw_pref = 'left';
-session = 'R4';
-ephys_sess = '26082023_Lindt_StrCer_S4_g0';
+session = 'R3';
+ephys_sess = '25082023_Toblerone_StrCer_S3_g0';
 imec_id = 0;
 %catGT_folder = 'catGT_KS_DSRemoved';
-catGT_folder = 'catGT';
+catGT_folder = 'catGT\kilosort4';
 output_folder_name = 'neurons_overview_pre';
 
 % To run / save
@@ -74,6 +74,16 @@ eventTime_ind_down = find(diff([0,syncDat])<-1);
 eventTimes_realTrial_ephys = eventTimes_water_giv(2:end);
 eventTimes_realTrial_harp = behavior.sync.time_newTrial_log(2:end);
 
+if numel(eventTimes_realTrial_ephys)<numel(eventTimes_realTrial_harp)
+    if round(sum(diff(eventTimes_realTrial_harp(2:end))-diff(eventTimes_realTrial_ephys))) == 0
+        eventTimes_realTrial_harp = behavior.sync.time_newTrial_log(3:end);
+        flag_remove_1st_behavior_frame = 1;
+        behavior.sync.flag_remove_1st_behavior_frame = flag_remove_1st_behavior_frame;
+        save(strcat(behavior_path,filesep,'behavior_session.mat'),'behavior');
+    end
+    fprintf('Removed the first trial from behavior! \n')
+end
+
 f=fit(eventTimes_realTrial_ephys,eventTimes_realTrial_harp,'poly1');
 tm_bhv2ephys =  @(eventTimes_realTrial_ephys)  f.p2+f.p1*eventTimes_realTrial_ephys;
 toc
@@ -86,8 +96,9 @@ if show_aux_plots
     hold off
 
     figure
-    subplot(211), plot(diff(eventTimes_water_giv));
-    subplot(212), plot(diff(eventTime_ind));
+    subplot(311), plot(diff(eventTimes_water_giv));
+    subplot(312), plot(diff(eventTime_ind));
+    subplot(313), plot(diff(behavior.sync.time_newTrial_log));
 
     figure
     plot(eventTimes_water_giv,behavior.sync.time_newTrial_log,'-'); hold on
