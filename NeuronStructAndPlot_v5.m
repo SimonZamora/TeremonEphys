@@ -4,25 +4,25 @@ clear; close all; clc
 
 %% Manage paths
 %person = 'teresa';
-person = 'teresa';
+person = 'simon';
 if strcmp(person,'teresa')
     behavior_root ='D:\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\data\TD\behavior_data\raw_data';
     ephys_root = 'E:\'; %group_ephys = '20230801_ChocolateGroup';
     %ephys_root = 'G:\ePhys\'; %group_ephys = '20230801_ChocolateGroup';
 elseif strcmp(person,'simon')
-    behavior_root ='C:\Users\SimonZ\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\data\TD\behavior_data\raw_data';
-    ephys_root = 'C:\Users\SimonZ\Documents\Data\EPhys\DTATA_2CURATE'; %group_ephys = '20230801_ChocolateGroup';
+    behavior_root ='D:\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\data\TD\behavior_data\raw_data';
+    ephys_root = 'E:\Session_Curated'; %group_ephys = '20230801_ChocolateGroup';
 end
 group_setup_behav = strcat('20230511_ChocolateGroup',filesep,'headfixed_dynamicTarget');
 
 % IDs and Definitions
-mouse = '3_Toblerone';
+mouse = '2_Lindt';
 paw_pref = 'left';
-session = 'R3';
-ephys_sess = '25082023_Toblerone_StrCer_S3_g0';
+session = 'R4';
+ephys_sess = '26082023_Lindt_StrCer_S4_g0';
 imec_id = 0;
 %catGT_folder = 'catGT_KS_DSRemoved';
-catGT_folder = 'catGT\kilosort4';
+catGT_folder = 'catGT';
 output_folder_name = 'neurons_overview_post';
 
 % To run / save
