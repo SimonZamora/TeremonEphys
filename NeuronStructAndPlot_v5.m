@@ -23,7 +23,7 @@ ephys_sess = '25082023_Toblerone_StrCer_S3_g0';
 imec_id = 0;
 %catGT_folder = 'catGT_KS_DSRemoved';
 catGT_folder = 'catGT\kilosort4';
-output_folder_name = 'neurons_overview_pre';
+output_folder_name = 'neurons_overview_post';
 
 % To run / save
 show_aux_plots = 0;

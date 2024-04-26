@@ -9,7 +9,7 @@ pathlib.PosixPath = pathlib.WindowsPath
 
 #%% 
 # outputs saved to results_dir
-results_dir = pathlib.WindowsPath(r"E:\25082023_Toblerone_StrCer_S3_g0\25082023_Toblerone_StrCer_S3_g0_imec0\catGT\kilosort4")
+results_dir = pathlib.WindowsPath(r"E:\25082023_Toblerone_StrCer_S3_g0\25082023_Toblerone_StrCer_S3_g0_imec1\catGT\kilosort4")
 ops_file = results_dir / 'ops.npy'
 ops = np.load(ops_file, allow_pickle=True).item()
 contam_pct = pd.read_csv(results_dir / 'cluster_ContamPct.tsv', sep='\t')['ContamPct'].values
