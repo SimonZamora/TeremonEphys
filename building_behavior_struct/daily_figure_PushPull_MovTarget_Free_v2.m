@@ -31,8 +31,8 @@ session = 'R4';
 
 % DISPLAY LENGTH
 % Sherten session to display (discart unengaged trials)
-shorten_display = 0;
-last_trial_disp = 189;
+shorten_display = 1;
+last_trial_disp = 190;
 
 %% Path
 %session = char(PP_sess(s));
