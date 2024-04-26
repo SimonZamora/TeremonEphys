@@ -3,21 +3,21 @@ clear; close all; clc
 
 %% Load data
 
-person = 'teresa';
-%person = 'simon';
+%person = 'teresa';
+person = 'simon';
 if strcmp(person,'teresa')
     raw_folder = 'D:\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\data\TD\behavior_data\raw_data';
 elseif strcmp(person,'simon')
-    raw_folder = 'C:\Users\SimonZ\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\data\TD\behavior_data\raw_data';
+    raw_folder = 'D:\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\data\TD\behavior_data\raw_data';
 end
 group = '20230511_ChocolateGroup';
 setup = 'headfixed_dynamicTarget';
-mouse = '3_Toblerone';
+mouse = '2_Lindt';
 % R:-1 |C:0 | L:1
 
         
 % SESSION
-session = 'R3';
+session = 'R4';
 % sess = dir(char(strcat(raw_folder,filesep,group,filesep,setup,filesep,mouse)));
 % sess_name = cell(length(sess),1);
 % for ss=1:length(sess)
@@ -31,8 +31,8 @@ session = 'R3';
 
 % DISPLAY LENGTH
 % Sherten session to display (discart unengaged trials)
-shorten_display = 1;
-last_trial_disp = 131;
+shorten_display = 0;
+last_trial_disp = 189;
 
 %% Path
 %session = char(PP_sess(s));
