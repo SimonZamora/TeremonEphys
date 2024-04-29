@@ -3,8 +3,8 @@ clear; close all; clc
 
 
 %% Manage paths
-%person = 'teresa';
-person = 'simon';
+person = 'teresa';
+%person = 'simon';
 if strcmp(person,'teresa')
     behavior_root ='D:\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\data\TD\behavior_data\raw_data';
     ephys_root = 'E:\'; %group_ephys = '20230801_ChocolateGroup';
