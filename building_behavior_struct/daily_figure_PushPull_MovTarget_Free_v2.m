@@ -12,12 +12,12 @@ elseif strcmp(person,'simon')
 end
 group = '20230511_ChocolateGroup';
 setup = 'headfixed_dynamicTarget';
-mouse = '2_Lindt';
+mouse = '5_FerreroRocher';
 % R:-1 |C:0 | L:1
 
         
 % SESSION
-session = 'R4';
+session = 'R1';
 % sess = dir(char(strcat(raw_folder,filesep,group,filesep,setup,filesep,mouse)));
 % sess_name = cell(length(sess),1);
 % for ss=1:length(sess)
@@ -31,7 +31,7 @@ session = 'R4';
 
 % DISPLAY LENGTH
 % Sherten session to display (discart unengaged trials)
-shorten_display = 1;
+shorten_display = 0;
 last_trial_disp = 190;
 
 %% Path

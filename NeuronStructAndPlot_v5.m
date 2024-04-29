@@ -11,12 +11,12 @@ if strcmp(person,'teresa')
     %ephys_root = 'G:\ePhys\'; %group_ephys = '20230801_ChocolateGroup';
 elseif strcmp(person,'simon')
     behavior_root ='D:\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\data\TD\behavior_data\raw_data';
-    ephys_root = 'E:\Session_Curated'; %group_ephys = '20230801_ChocolateGroup';
+    ephys_root = 'C:\Users\SimonZ\Documents\Data\EPhys\DTATA_2CURATE'; %group_ephys = '20230801_ChocolateGroup';
 end
 group_setup_behav = strcat('20230511_ChocolateGroup',filesep,'headfixed_dynamicTarget');
 
 % IDs and Definitions
-mouse = '2_Lindt';
+mouse = '5_FerreroRocher';
 paw_pref = 'left';
 session = 'R4';
 ephys_sess = '26082023_Lindt_StrCer_S4_g0';
@@ -61,7 +61,7 @@ toc
 nChansInFile = 385;  % neuropixels phase3a, from spikeGLX
 syncChanIndex = 385;
 tic
-syncDat = extractSyncChannel(ephys_path, nChansInFile, syncChanIndex);
+syncDat = extractSyncChannel(myKsDir, nChansInFile, syncChanIndex);
 
 lfpFs = 2500;
 eventTimes = spikeGLXdigitalParse(syncDat, lfpFs);
