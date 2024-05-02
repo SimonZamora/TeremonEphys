@@ -1,7 +1,6 @@
 %% Get neuron struct
 clear; close all; clc
 
-
 %% Manage paths
 person = 'teresa';
 %person = 'simon';
@@ -16,14 +15,14 @@ end
 group_setup_behav = strcat('20230511_ChocolateGroup',filesep,'headfixed_dynamicTarget');
 
 % IDs and Definitions
-mouse = '5_FerreroRocher';
+mouse = '3_Toblerone';
 paw_pref = 'left';
-session = 'R4';
-ephys_sess = '26082023_Lindt_StrCer_S4_g0';
+session = 'R3';
+ephys_sess = '25082023_Toblerone_StrCer_S3_g0';
 imec_id = 0;
 %catGT_folder = 'catGT_KS_DSRemoved';
-catGT_folder = 'catGT';
-output_folder_name = 'neurons_overview_post';
+catGT_folder = 'catGT\kilosort4';
+output_folder_name = 'neurons_overview_pre';
 
 % To run / save
 show_aux_plots = 0;
@@ -61,7 +60,7 @@ toc
 nChansInFile = 385;  % neuropixels phase3a, from spikeGLX
 syncChanIndex = 385;
 tic
-syncDat = extractSyncChannel(myKsDir, nChansInFile, syncChanIndex);
+syncDat = extractSyncChannel(ephys_LFP_path, nChansInFile, syncChanIndex);
 
 lfpFs = 2500;
 eventTimes = spikeGLXdigitalParse(syncDat, lfpFs);
@@ -399,7 +398,7 @@ for un = 1: length(neurons)
         % ISI  --------------------------------------------
         ISI = diff(neurons(un).st);
         [neurons(un).isiProba, neurons(un).edgesISI] = histcounts(ISI,isi_bins);
-        if exist('potentialCS','var')
+        if sum(pCS) ~= 0
             if neurons(un).potentialCS == 1
                 [neurons(un).isiProba, neurons(un).edgesISI] = histcounts(ISI,isi_bins_cs);
             end
