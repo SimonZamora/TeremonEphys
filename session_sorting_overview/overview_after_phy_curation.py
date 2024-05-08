@@ -7,9 +7,13 @@ import pathlib
 temp = pathlib.PosixPath   
 pathlib.PosixPath = pathlib.WindowsPath
 
-#%% 
+#%% CHANGE DIRECTORY AND STAGE (pre / post behavior alignment)
 # outputs saved to results_dir
-results_dir = pathlib.WindowsPath(r"E:\25082023_Toblerone_StrCer_S3_g0\25082023_Toblerone_StrCer_S3_g0_imec1\catGT\kilosort4")
+results_dir = pathlib.WindowsPath(r"E:\08082023_CoteDor_StrCer_S6_g0\08082023_CoteDor_StrCer_S6_g0_imec0\catGT\kilosort4")
+stage = 'post'
+
+
+#%% Genrate overview figure
 ops = np.load(results_dir / 'ops.npy', allow_pickle=True).item()
 contam_pct = pd.read_csv(results_dir / 'cluster_ContamPct.tsv', sep='\t')['ContamPct'].values
 chan_map =  np.load(results_dir / 'channel_map.npy')
@@ -87,7 +91,7 @@ ax.set_xlim([7, 35])
 #ax.set_ylim([0, 80])
 ax.set_xlabel('amplitude')
 ax.set_ylabel('# of spikes')
-ax.set_title('Total number of clusters: {}'.format(len(amplitudes)))
+ax.set_title('Total number of spikes: {}'.format(len(amplitudes)))
 
 ax = fig.add_subplot(grid[1,2])
 ax.text(0.5, 0.8, f'# extra good units: {len(extragood_clu)}', ha='center', va='center',fontsize=14)
@@ -104,5 +108,5 @@ nb_m = ax.hist(pos[:,1][idx_m_sp], bins=bins_all, color='m', alpha = 0.25, label
 ax.set_xlabel('# of spikes')
 ax.set_ylabel('depth of probe (um)')
 ax.set_ylim([0, 4000])
-plt.savefig(results_dir / 'output_phy_curated_post.png')
+plt.savefig(str(results_dir / ('output_phy_curated_' + stage + '.png')))
 plt.show()
