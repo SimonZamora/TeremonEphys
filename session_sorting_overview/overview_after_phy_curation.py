@@ -9,8 +9,8 @@ pathlib.PosixPath = pathlib.WindowsPath
 
 #%% CHANGE DIRECTORY AND STAGE (pre / post behavior alignment)
 # outputs saved to results_dir
-results_dir = pathlib.WindowsPath(r"E:\08082023_CoteDor_StrCer_S6_g0\08082023_CoteDor_StrCer_S6_g0_imec0\catGT\kilosort4")
-stage = 'post'
+results_dir = pathlib.WindowsPath(r"E:\18082023_Ferrero_StrCer_S4_g0\18082023_Ferrero_StrCer_S4_g0_imec1\catGT\kilosort4")
+stage = 'pre'
 
 
 #%% Genrate overview figure
@@ -76,7 +76,7 @@ nb_all, bins_all, patches_all = ax.hist(firing_rates, bins=50, color=gray, alpha
 nb_eg = ax.hist(firing_rates[idx_eg_clu], bins=bins_all, color='b', alpha = 0.25, label='extra good')
 nb_g = ax.hist(firing_rates[idx_g_clu], bins=bins_all, color='g', alpha = 0.25, label='good')
 #nb_m = ax.hist(firing_rates[idx_m_clu], bins=bins_all, color='r', alpha = 0.10, label='mua')
-ax.set_xlim([0, 150])
+#ax.set_xlim([0, 150])
 ax.set_ylim([0, 80])
 ax.set_xlabel('firing rate (Hz)')
 ax.set_ylabel('# of units')
