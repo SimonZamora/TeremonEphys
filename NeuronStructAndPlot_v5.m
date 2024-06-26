@@ -4,6 +4,7 @@ clear; close all; clc
 %% Manage paths
 person = 'teresa';
 %person = 'simon';
+%person = 'srinidhi';
 if strcmp(person,'teresa')
     behavior_root ='D:\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\data\TD\behavior_data\raw_data';
     ephys_root = 'E:\'; %group_ephys = '20230801_ChocolateGroup';
@@ -11,15 +12,18 @@ if strcmp(person,'teresa')
 elseif strcmp(person,'simon')
     behavior_root ='D:\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\data\TD\behavior_data\raw_data';
     ephys_root = 'C:\Users\SimonZ\Documents\Data\EPhys\DTATA_2CURATE'; %group_ephys = '20230801_ChocolateGroup';
+elseif strcmp(person,'srinidhi')
+    behavior_root ='C:\Users\srini\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\data\TD\behavior_data\raw_data';
+    ephys_root = 'D:\Srinidhi\'; %group_ephys = '20230801_ChocolateGroup';
 end
 group_setup_behav = strcat('20230511_ChocolateGroup',filesep,'headfixed_dynamicTarget');
 
 % IDs and Definitions
-mouse = '2_Lindt';
-paw_pref = 'left';
+mouse = '5_FerreroRocher';
+paw_pref = 'right';
 session = 'R4';
-ephys_sess = '26082023_Lindt_StrCer_S4_g0';
-imec_id = 0;
+ephys_sess = '18082023_Ferrero_StrCer_S4_g0';
+imec_id = 1;
 %catGT_folder = 'catGT_KS_DSRemoved';
 catGT_folder = 'catGT\kilosort4';
 output_folder_name = 'neurons_overview_post';
@@ -27,6 +31,7 @@ output_folder_name = 'neurons_overview_post';
 % To run / save
 show_aux_plots = 0;
 save_mat_flag = 1;
+plot_neuron_fig = 1;
 
 % Probe side: BG or CB
 if strcmp(paw_pref,'right')
@@ -139,12 +144,12 @@ end
 % Find total number of units
 nOfUnits = numel(uniqueUnits);
 
-% Find the duration of the behavior session with engagement 
+% Find the duration of the behavior session with engagement
 behav_start = behavior.behavior_duration.time_start;
 behav_stop = behavior.behavior_duration.time_end + behav_start;
 behavior_end_timelog = behavior.behavior_duration.time_end;
 all_st = tm_bhv2ephys(sp.st);
-st_behaviorEpochBool = all_st>behav_start & all_st<behav_stop;  
+st_behaviorEpochBool = all_st>behav_start & all_st<behav_stop;
 
 
 
@@ -159,7 +164,7 @@ for iUnit = 1:nOfUnits
     % find the spikes for the cluster and time
     cluSpikeBool = sp.clu == uniqueUnits(iUnit);
     thisSpikeBool = st_behaviorEpochBool & cluSpikeBool;
-   
+
 
     % spike times (raw and in behavior time)
     temp_neurons(iUnit).st_raw_all = sp.st(cluSpikeBool);
@@ -237,15 +242,16 @@ left_idx = behavior.reach.left_idx(behavior.reach.left_idx<=nr_trials);
 right_idx = behavior.reach.right_idx(behavior.reach.right_idx<=nr_trials);
 center_idx = behavior.reach.center_idx(behavior.reach.center_idx<=nr_trials);
 
-% parameters around events
-tm_before = -3;
-tm_after = 2;
-bin_width = .002;
-bin_edges = tm_before:bin_width:tm_after+bin_width;
-
 % gamma for PSTH
-k = gammakernel('peakx',.05,'binwidth',bin_width);
-spk_bins = (bin_edges(1)-k.paddx(1)):bin_width:(bin_edges(end)-k.paddx(2));
+peak_x = .05;
+bin_width = .002;
+k = gammakernel('peakx',peak_x,'binwidth',bin_width);
+
+% parameters around events
+tm_before = -3; % sec
+tm_after = 2; % sec
+bin_edges = tm_before+k.paddx(1):bin_width:tm_after+k.paddx(2);
+spk_bins = tm_before:bin_width:tm_after;
 
 % params for mean session FR
 nbins_FR = 50;
@@ -288,7 +294,7 @@ event_size = 5;
 patch_wd = 10;
 
 % Line plot
-line_x = [(tm_before-k.paddx(1));(tm_before-k.paddx(1))]+0.08;
+line_x = [tm_before;tm_before]+0.08;
 % init
 pull_bounds = behavior.init.pull_bounds;
 push_bounds = behavior.init.push_bounds;
@@ -320,7 +326,7 @@ figProp.invalid_clr_fc = [.8 .8 .8];
 fprintf('Align activity to behavior...\n')
 tic
 for un = 1: length(neurons)
-     %un = 90;
+    %un = 90;
     if ~isempty(neurons(un).st_raw)
 
         %un=1;
@@ -337,16 +343,16 @@ for un = 1: length(neurons)
         for tt = 1:nr_trials
             % init: push/pull
             spike_init_flags = ...
-                neurons(un).st > initiation_times(tt) + tm_before & ...
-                neurons(un).st <= initiation_times(tt) + tm_after;
+                neurons(un).st > initiation_times(tt) + bin_edges(1) & ...
+                neurons(un).st <= initiation_times(tt) + bin_edges(end);
             neurons(un).st_init{tt} = ...
                 neurons(un).st(spike_init_flags) - initiation_times(tt);
             neurons(un).reach_in_init(tt) = reach_times(tt) - initiation_times(tt);
             neurons(un).spk_trials_init{tt} = ones(size(neurons(un).st_init{tt}))*tt;
             % reach_ left/center/right
             spike_reach_flags = ...
-                neurons(un).st > reach_times(tt) + tm_before & ...
-                neurons(un).st <= reach_times(tt) + tm_after;
+                neurons(un).st > reach_times(tt) + bin_edges(1) & ...
+                neurons(un).st <= reach_times(tt) + bin_edges(end);
             neurons(un).st_reach{tt} = ...
                 neurons(un).st(spike_reach_flags) - reach_times(tt);
             neurons(un).init_in_reach(tt) = initiation_times(tt) - reach_times(tt);
@@ -413,291 +419,293 @@ for un = 1: length(neurons)
 
 
         %% FIGURE
-        if neurons(un).quality==2
-            %define layout
-            fig=figure();
-            tt = tiledlayout(5,7);
-            title(tt,sprintf('%s%s%s%s%s%s%s%s%s%s%s%s',...
-                'mouse: ',neurons(un).meta.recordedAnimal,...
-                ' | session: ',neurons(un).meta.recordedSession,...
-                ' | probe: imec', num2str(neurons(un).meta.imecID),...
-                ' | region: ',neurons(un).meta.region,...
-                ' | neuron phyID: ', num2str(neurons(un).phyID),...
-                ' | neuron idx: ', num2str(neurons(un).unitIdx)),...
-                'Interpreter', 'none','fontsize',12,'fontweight','normal')
-
-            % --------------------------------------------------------------
-            % NEURON DEPTH
-            axx0 = nexttile;
-            axx0.Layout.TileSpan = [3,1];
-
-            [depth_ocupacy,depth]=histcounts(sp.spikeDepths,50);
-            histogram('BinEdges', depth ,'BinCounts',  depth_ocupacy,...
-                'facecolor',figProp.FR_clrFace ,'facealpha',0.6,'edgecolor','none');
-            set(gca,figProp.axeOpt{:},'XDir','reverse')
-            camroll(-90)
-            h = gca;
-            xlim([0 3500])
-            h.YAxis.Visible = 'off';
-            xline(neurons(un).depth,'-',sprintf('%s%i','Unit ID: ',neurons(un).phyID)...
-                ,'LabelHorizontalAlignment','center','LabelVerticalAlignment','middle',...
-                'color','k','linewidth',3)
-            xlabel('Depth of neuropixel probe (\mum)');
-
-            % --------------------------------------------------------------
-            % PSTH ALIGN TO INIT
-            axx1 = nexttile;
-            axx1.Layout.TileSpan = [1,2];
-
-            shadedErrorBar(spk_bins,psth_push,psth_push_sem,'lineProps',{'Color',push_clr,'LineWidth',2},'transparent',1,'patchSaturation',0.1); hold on
-            shadedErrorBar(spk_bins,psth_pull,psth_pull_sem,'lineProps',{'Color',pull_clr,'LineWidth',2},'transparent',1,'patchSaturation',0.1); hold on
-            ylabel('spike rate (sp/s)'); xlabel('time from trial init (s)');
-            xlim([tm_before-k.paddx(1) tm_after-k.paddx(2)])
-            xline(0,'--','Color',[pp_clr 0.3],'linewidth',2);
-            set(gca,axeOpt{:})
-            title('trial initiation (push/pull)')
-            %title(sprintf('%s%s','Region: ',region));
-
-            % --------------------------------------------------------------
-            % PSTH ALIGN TO REACH
-            axx2 = nexttile;
-            axx2.Layout.TileSpan = [1,2];
-
-            shadedErrorBar(spk_bins,psth_right,psth_right_sem,'lineProps',{'Color',right_color,'LineWidth',2},'transparent',1,'patchSaturation',0.1); hold on
-            shadedErrorBar(spk_bins,psth_left,psth_left_sem,'lineProps',{'Color',left_color,'LineWidth',2},'transparent',1,'patchSaturation',0.1); hold on
-            shadedErrorBar(spk_bins,psth_center,psth_center_sem,'lineProps',{'Color',center_color,'LineWidth',2},'transparent',1,'patchSaturation',0.1); hold on
-            ylabel('spike rate (sp/s)'); xlabel('time from reach (s)');
-            xlim([tm_before-k.paddx(1) tm_after-k.paddx(2)])
-            xline(0,'--','Color',[rcl_clr 0.3],'linewidth',2);
-            set(gca,axeOpt{:})
-            title('water collection (reach)')
-            %title(sprintf('%s%s','Cell unit: ',num2str(neurons(un).phyID)));
-
-            % --------------------------------------------------------------
-            % CROSS-CORRELOGRAM
-            axxx1 = nexttile;
-            axxx1.Layout.TileSpan = [1,2];
-            bar(ccg_t.*1000, ccg(:,1,1),'BarWidth', 1,...
-                'facecolor',figProp.spk_clr_hist,'edgecolor','none','facealpha',.9)
-            set(gca,figProp.axeOpt{:})
-            xlabel('time (ms)'); ylabel('spike rate (sp/s)')
-            title('cross-correlogram')
-
-            % --------------------------------------------------------------
-            % SCATTER SPIKE TIMES ALIGNED TO INIT
-            axx3 = nexttile;
-            axx3.Layout.TileSpan = [2,2];
-
-            scatter(cell2mat(neurons(un).st_init),cell2mat(neurons(un).spk_trials_init),spk_size,'k.'), hold on
-            scatter(neurons(un).reach_in_init,trials_vec,event_size,'filled','MarkerFaceColor',rcl_clr)
-            scatter(zeros(size(trials_vec)),trials_vec,event_size,'filled','MarkerFaceColor',pp_clr)
-            plot(line_x,pull_bounds,'linewidth',patch_wd,'color',pull_clr)
-            plot(line_x,push_bounds,'linewidth',patch_wd,'color',push_clr)
-            hold off
-            axis tight;
-            xlabel('time from trial init (s)'); ylabel('trials in session')
-            axis([tm_before-k.paddx(1) tm_after-k.paddx(2) 0 nr_trials])
-            set(gca,axeOpt{:})
-            set(gcf,'Position',[2582,215,560,771],'color','w')
-
-            % --------------------------------------------------------------
-            % SCATTER SPIKE TIMES ALIGNED TO REACH
-            axx4 = nexttile;
-            axx4.Layout.TileSpan = [2,2];
-
-            scatter(cell2mat(neurons(un).st_reach),cell2mat(neurons(un).spk_trials_reach),spk_size,'k.'), hold on
-            scatter(neurons(un).init_in_reach,trials_vec,event_size,'filled','MarkerFaceColor',pp_clr)
-            scatter(zeros(size(trials_vec)),trials_vec,event_size,'filled','MarkerFaceColor',rcl_clr)
-            plot(repmat(line_x,[1 size(right_bounds,2)]),right_bounds,'linewidth',patch_wd,'color',right_color)
-            plot(repmat(line_x,[1 size(left_bounds,2)]),left_bounds,'linewidth',patch_wd,'color',left_color)
-            plot(repmat(line_x,[1 size(center_bounds,2)]),center_bounds,'linewidth',patch_wd,'color',center_color)
-            hold off
-            axis tight;
-            axis([tm_before-k.paddx(1) tm_after-k.paddx(2) 0 nr_trials])
-            xlabel('time from water collection (s)'); ylabel('trials in session')
-            set(gca,axeOpt{:})
-
-            % --------------------------------------------------------------
-            % ISI
-            axxx2 = nexttile;
-            axxx2.Layout.TileSpan = [2,2];
-
-            histogram('BinEdges', neurons(un).edgesISI.*1000 ,'BinCounts',  neurons(un).isiProba,...
-                'facecolor',figProp.spk_clr_hist,'edgecolor','none','facealpha',.9)
-            set(gca,axeOpt{:})
-            xlabel('interspike interval (ms)'); ylabel ('# of spikes')
-            %title('interspike interval')
-
+        if plot_neuron_fig == 1
             if neurons(un).quality==2
-                cell_qual = 'good';
-            elseif neurons(un).quality==1
-                cell_qual = 'mua';
-            else
-                cell_qual = 'noise';
-            end
-            dim_inf=[0.84 0.31 0.4 0.4];
-            annotation('textbox',dim_inf,'String',{...
-                "quality = " + cell_qual,...
-                "extra good = " + num2str(neurons(un).extraGood),...
-                "# spikes = " + num2str(length(neurons(un).st)),...
-                },'edgecolor','w','fontsize',10.5, 'FitBoxToText','on')
-% 
-             if sum(pCS) ~= 0
-                 if neurons(un).potentialCS == 1
-                      annotation('textbox',[0.84 0.25 0.4 0.4],'String',...
-                "potential CS!",...
-                'edgecolor','w','fontsize',10.5, 'FitBoxToText','on')
-                 end
-             end
+                %define layout
+                fig=figure();
+                tt = tiledlayout(5,7);
+                title(tt,sprintf('%s%s%s%s%s%s%s%s%s%s%s%s',...
+                    'mouse: ',neurons(un).meta.recordedAnimal,...
+                    ' | session: ',neurons(un).meta.recordedSession,...
+                    ' | probe: imec', num2str(neurons(un).meta.imecID),...
+                    ' | region: ',neurons(un).meta.region,...
+                    ' | neuron phyID: ', num2str(neurons(un).phyID),...
+                    ' | neuron idx: ', num2str(neurons(un).unitIdx)),...
+                    'Interpreter', 'none','fontsize',12,'fontweight','normal')
 
-            % --------------------------------------------------------------
-            % BEHAVIOR THROUGHOUT SESSION
-            ax1 = nexttile;
+                % --------------------------------------------------------------
+                % NEURON DEPTH
+                axx0 = nexttile;
+                axx0.Layout.TileSpan = [3,1];
 
-            fr_plot = 0;
-            maxBev =  max([val_init,inval_init])+1;
-            maxFR = ceil(max(neurons(un).FR_sess_mean))+1;
-            max_yLim = max([maxBev,maxFR])+2;
-            plen = 2;
-            patchY.extend = 1;
-            patchY.showPatch = 1;
+                [depth_ocupacy,depth]=histcounts(sp.spikeDepths,50);
+                histogram('BinEdges', depth ,'BinCounts',  depth_ocupacy,...
+                    'facecolor',figProp.FR_clrFace ,'facealpha',0.6,'edgecolor','none');
+                set(gca,figProp.axeOpt{:},'XDir','reverse')
+                camroll(-90)
+                h = gca;
+                xlim([0 3500])
+                h.YAxis.Visible = 'off';
+                xline(neurons(un).depth,'-',sprintf('%s%i','Unit ID: ',neurons(un).phyID)...
+                    ,'LabelHorizontalAlignment','center','LabelVerticalAlignment','middle',...
+                    'color','k','linewidth',3)
+                xlabel('Depth of neuropixel probe (\mum)');
 
-            % FR
-            if fr_plot
-                yyaxis left
-                histogram('BinEdges', neurons(un).edges_sess./60 ,'BinCounts',  neurons(un).FR_sess_mean,...
-                    'displaystyle','stairs','linewidth',1.5, 'edgecolor',figProp.FR_clr); hold on
-                histogram('BinEdges', neurons(un).edges_sess./60 ,'BinCounts',  neurons(un).FR_sess_mean,...
-                    'facecolor',figProp.FR_clrFace ,'facealpha',0.3,'edgecolor','none')
-                ylim([0 maxFR+plen*2]);
-                set(gca, 'YColor', figProp.FR_clr);
-                if (maxFR>maxBev)
-                    patchY.pp = [maxFR+plen maxFR+(plen*2) maxFR+(plen*2) maxFR+plen];
-                    patchY.rlc = [maxFR maxFR+plen maxFR+plen maxFR];
+                % --------------------------------------------------------------
+                % PSTH ALIGN TO INIT
+                axx1 = nexttile;
+                axx1.Layout.TileSpan = [1,2];
+
+                shadedErrorBar(spk_bins,psth_push,psth_push_sem,'lineProps',{'Color',push_clr,'LineWidth',2},'transparent',1,'patchSaturation',0.1); hold on
+                shadedErrorBar(spk_bins,psth_pull,psth_pull_sem,'lineProps',{'Color',pull_clr,'LineWidth',2},'transparent',1,'patchSaturation',0.1); hold on
+                ylabel('spike rate (sp/s)'); xlabel('time from trial init (s)');
+                xlim([tm_before tm_after])
+                xline(0,'--','Color',[pp_clr 0.3],'linewidth',2);
+                set(gca,axeOpt{:})
+                title('trial initiation (push/pull)')
+                %title(sprintf('%s%s','Region: ',region));
+
+                % --------------------------------------------------------------
+                % PSTH ALIGN TO REACH
+                axx2 = nexttile;
+                axx2.Layout.TileSpan = [1,2];
+
+                shadedErrorBar(spk_bins,psth_right,psth_right_sem,'lineProps',{'Color',right_color,'LineWidth',2},'transparent',1,'patchSaturation',0.1); hold on
+                shadedErrorBar(spk_bins,psth_left,psth_left_sem,'lineProps',{'Color',left_color,'LineWidth',2},'transparent',1,'patchSaturation',0.1); hold on
+                shadedErrorBar(spk_bins,psth_center,psth_center_sem,'lineProps',{'Color',center_color,'LineWidth',2},'transparent',1,'patchSaturation',0.1); hold on
+                ylabel('spike rate (sp/s)'); xlabel('time from reach (s)');
+                xlim([tm_before tm_after])
+                xline(0,'--','Color',[rcl_clr 0.3],'linewidth',2);
+                set(gca,axeOpt{:})
+                title('water collection (reach)')
+                %title(sprintf('%s%s','Cell unit: ',num2str(neurons(un).phyID)));
+
+                % --------------------------------------------------------------
+                % CROSS-CORRELOGRAM
+                axxx1 = nexttile;
+                axxx1.Layout.TileSpan = [1,2];
+                bar(ccg_t.*1000, ccg(:,1,1),'BarWidth', 1,...
+                    'facecolor',figProp.spk_clr_hist,'edgecolor','none','facealpha',.9)
+                set(gca,figProp.axeOpt{:})
+                xlabel('time (ms)'); ylabel('spike rate (sp/s)')
+                title('cross-correlogram')
+
+                % --------------------------------------------------------------
+                % SCATTER SPIKE TIMES ALIGNED TO INIT
+                axx3 = nexttile;
+                axx3.Layout.TileSpan = [2,2];
+
+                scatter(cell2mat(neurons(un).st_init),cell2mat(neurons(un).spk_trials_init),spk_size,'k.'), hold on
+                scatter(neurons(un).reach_in_init,trials_vec,event_size,'filled','MarkerFaceColor',rcl_clr)
+                scatter(zeros(size(trials_vec)),trials_vec,event_size,'filled','MarkerFaceColor',pp_clr)
+                plot(line_x,pull_bounds,'linewidth',patch_wd,'color',pull_clr)
+                plot(line_x,push_bounds,'linewidth',patch_wd,'color',push_clr)
+                hold off
+                axis tight;
+                xlabel('time from trial init (s)'); ylabel('trials in session')
+                axis([tm_before tm_after 0 nr_trials])
+                set(gca,axeOpt{:})
+                set(gcf,'Position',[2582,215,560,771],'color','w')
+
+                % --------------------------------------------------------------
+                % SCATTER SPIKE TIMES ALIGNED TO REACH
+                axx4 = nexttile;
+                axx4.Layout.TileSpan = [2,2];
+
+                scatter(cell2mat(neurons(un).st_reach),cell2mat(neurons(un).spk_trials_reach),spk_size,'k.'), hold on
+                scatter(neurons(un).init_in_reach,trials_vec,event_size,'filled','MarkerFaceColor',pp_clr)
+                scatter(zeros(size(trials_vec)),trials_vec,event_size,'filled','MarkerFaceColor',rcl_clr)
+                plot(repmat(line_x,[1 size(right_bounds,2)]),right_bounds,'linewidth',patch_wd,'color',right_color)
+                plot(repmat(line_x,[1 size(left_bounds,2)]),left_bounds,'linewidth',patch_wd,'color',left_color)
+                plot(repmat(line_x,[1 size(center_bounds,2)]),center_bounds,'linewidth',patch_wd,'color',center_color)
+                hold off
+                axis tight;
+                axis([tm_before tm_after 0 nr_trials])
+                xlabel('time from water collection (s)'); ylabel('trials in session')
+                set(gca,axeOpt{:})
+
+                % --------------------------------------------------------------
+                % ISI
+                axxx2 = nexttile;
+                axxx2.Layout.TileSpan = [2,2];
+
+                histogram('BinEdges', neurons(un).edgesISI.*1000 ,'BinCounts',  neurons(un).isiProba,...
+                    'facecolor',figProp.spk_clr_hist,'edgecolor','none','facealpha',.9)
+                set(gca,axeOpt{:})
+                xlabel('interspike interval (ms)'); ylabel ('# of spikes')
+                %title('interspike interval')
+
+                if neurons(un).quality==2
+                    cell_qual = 'good';
+                elseif neurons(un).quality==1
+                    cell_qual = 'mua';
+                else
+                    cell_qual = 'noise';
+                end
+                dim_inf=[0.84 0.31 0.4 0.4];
+                annotation('textbox',dim_inf,'String',{...
+                    "quality = " + cell_qual,...
+                    "extra good = " + num2str(neurons(un).extraGood),...
+                    "# spikes = " + num2str(length(neurons(un).st)),...
+                    },'edgecolor','w','fontsize',10.5, 'FitBoxToText','on')
+                %
+                if sum(pCS) ~= 0
+                    if neurons(un).potentialCS == 1
+                        annotation('textbox',[0.84 0.25 0.4 0.4],'String',...
+                            "potential CS!",...
+                            'edgecolor','w','fontsize',10.5, 'FitBoxToText','on')
+                    end
+                end
+
+                % --------------------------------------------------------------
+                % BEHAVIOR THROUGHOUT SESSION
+                ax1 = nexttile;
+
+                fr_plot = 0;
+                maxBev =  max([val_init,inval_init])+1;
+                maxFR = ceil(max(neurons(un).FR_sess_mean))+1;
+                max_yLim = max([maxBev,maxFR])+2;
+                plen = 2;
+                patchY.extend = 1;
+                patchY.showPatch = 1;
+
+                % FR
+                if fr_plot
+                    yyaxis left
+                    histogram('BinEdges', neurons(un).edges_sess./60 ,'BinCounts',  neurons(un).FR_sess_mean,...
+                        'displaystyle','stairs','linewidth',1.5, 'edgecolor',figProp.FR_clr); hold on
+                    histogram('BinEdges', neurons(un).edges_sess./60 ,'BinCounts',  neurons(un).FR_sess_mean,...
+                        'facecolor',figProp.FR_clrFace ,'facealpha',0.3,'edgecolor','none')
+                    ylim([0 maxFR+plen*2]);
+                    set(gca, 'YColor', figProp.FR_clr);
+                    if (maxFR>maxBev)
+                        patchY.pp = [maxFR+plen maxFR+(plen*2) maxFR+(plen*2) maxFR+plen];
+                        patchY.rlc = [maxFR maxFR+plen maxFR+plen maxFR];
+                        landmarks_plt = behavior_landmarks(behavior, figProp,patchY);
+                    end
+                    ylabel('mean firing rate (sp/s)','color', figProp.FR_clr)
+
+                    % behavior
+                    yyaxis right
+                end
+                p1 = histogram('BinEdges', ed./60 ,'BinCounts',  val_init,...
+                    'displaystyle','stairs','linewidth',1.5, 'edgecolor',figProp.valid_clr,'LineStyle','-');
+                hold on
+                histogram('BinEdges', ed./60 ,'BinCounts',  val_init,...
+                    'facecolor',figProp.valid_clr_fc ,'facealpha',0.3,'edgecolor','none')
+                p2 = histogram('BinEdges', ed2./60 ,'BinCounts',  inval_init,...
+                    'displaystyle','stairs','linewidth',1.5, 'edgecolor',figProp.invalid_clr,'LineStyle','--');
+                histogram('BinEdges', ed2./60 ,'BinCounts',  inval_init,...
+                    'facecolor',figProp.invalid_clr_fc ,'facealpha',0.3,'edgecolor','none')
+                ylim([0 maxBev+1]);
+                xlim([0 behavior_end_timelog/60])
+                ylabel('trial counts (3 min^{-1})','Color', figProp.spk_clr)
+                set(gca, 'YColor', figProp.valid_clr);
+                xlabel('time across session (min)');
+                ylim([0 maxBev+plen*2]);
+                if (maxFR<maxBev  || fr_plot==0)
+                    patchY.pp = [maxBev+plen maxBev+(plen*2) maxBev+(plen*2) maxBev+plen];
+                    patchY.rlc = [maxBev maxBev+plen maxBev+plen maxBev];
                     landmarks_plt = behavior_landmarks(behavior, figProp,patchY);
                 end
+                %     xlim([0 behavior.session_duration/60])
+                %     h2 = gca;
+                h2.XAxis.Visible = 'off';
+                title('Behavior and cell activity across the session')
+                lgd1 = legend([p1, p2], 'valid counts', 'invalid counts',...
+                    'location','east','edgeColor', 'w');
+
+                % legend
+                axleg = nexttile(26);
+                lgd2=legend(axleg,landmarks_plt,...
+                    'push','pull','left','right','center',...
+                    'edgeColor','w','fontsize',10.5);
+                lgd2.Layout.Tile = 26;
+                set(axleg,'Visible', 'off');
+                ax1.Layout.TileSpan = [1, 4];
+
+
+
+                % --------------------------------------------------------------
+                % WAVWFORMS
+                axxx3 = nexttile;
+                axxx3.Layout.TileSpan = [2,2];
+
+                time_wf = (0:1/sp.sample_rate:(size(neurons(un).templateWaveforms,1)-1)/sp.sample_rate)*1000;
+                plot(time_wf,zero2nan(neurons(un).templateWaveforms(:,:)),'linewidth',1.5,'Color',[.8 .8 .8]);
+                hold on
+                for i = 1:length(neurons(un).templateID)
+                    plot(time_wf,zero2nan(neurons(un).templateWaveforms(:,neurons(un).templatePeakCh(i))),...
+                        'linewidth',2,'Color',[.1 .1 .1 neurons(un).templateWeight(i)]);
+                end
+                hold off
+                set(gca,figProp.axeOpt{:})
+                xlabel('time (ms)'); ylabel('template waveform (pseudo-volts)')
+                str = 'Straight Line Plot from 1 to 10';
+                dim_ch=[0.85 0.12 0.1 0.1];
+                title('template waveform')
+                annotation('textbox',dim_ch,'String',...
+                    sprintf('%s%s','channel = ',num2str(neurons(un).templatePeakCh)),...
+                    'edgecolor','w','fontsize',10.5)
+
+                % --------------------------------------------------------------
+                % AMPLITUDE & FIRING RATE
+                ax2 = nexttile;
+                ax2.Layout.TileSpan = [1,4];
+                linkaxes([ax1, ax2], 'x');
+                lp = 0; % if we want to display the patches
+
+                % amplitude
+                AmpLimMax = ceil(max(neurons(un).amplitudes));
+                AmpLimMin = floor(min(neurons(un).amplitudes))-5;
+                %colororder({figProp.FR_clr,figProp.spk_clr(1:3)})
+                yyaxis left
+                amp_plt = plot((neurons(un).st-behav_start)./60,neurons(un).amplitudes,'.','Color', figProp.spk_clr);
+                hold on
+                ylim([0 AmpLimMax+lp]);
+                ylabel('amplitude (pseudo-volts)','Color', figProp.spk_clr)
+                set(gca,figProp.axeOpt{:})
+                set(gca,'YColor',figProp.spk_clr)
+
+                % firing rate
+                yyaxis right
+                histogram('BinEdges', neurons(un).edges_sess./60 ,'BinCounts',  neurons(un).FR_sess_mean,...
+                    'displaystyle','stairs','linewidth',1.5, 'edgecolor',figProp.FR_clr)
+                histogram('BinEdges', neurons(un).edges_sess./60 ,'BinCounts',  neurons(un).FR_sess_mean,...
+                    'facecolor',figProp.FR_clrFace ,'facealpha',0.6,'edgecolor','none')
+                maxFR = ceil(max(neurons(un).FR_sess_mean));
+                ylim([0 maxFR+(lp*2)]);
+                set(gca, 'YColor', figProp.spk_clr);
                 ylabel('mean firing rate (sp/s)','color', figProp.FR_clr)
 
-                % behavior
-                yyaxis right
+                maxY = max([maxFR AmpLimMax]);
+                patchY.extend = 1;
+                patchY.showPatch = 0;
+                landmarks_plt2 = behavior_landmarks(behavior, figProp,patchY);
+                xlim([0 behavior_end_timelog./60])
+                xlabel('time across session (min)');
+                set(gca, 'YColor', figProp.FR_clr);
+
+
+                % --------------------------------------------------------------
+                % AMPLITUDE HISTOGRAM
+                ax3 =nexttile;
+                nbins = 30;
+                histogram(neurons(un).amplitudes,nbins,'FaceColor',...
+                    figProp.spk_clr_hist,'facealpha',.5);
+                xlim([0 AmpLimMax+6])
+                hax = gca;
+                hax.YDir = 'reverse';
+                camroll(90)
+                set(gca,figProp.axeOpt{:})
+                ylabel('density'); xlabel('amplitude');
+
+
+                set(gcf,'Position',[2078 49 1583 949],'color','w')
+                %drawnow;
+                % Save figure
+                saveas(gcf,strcat(out_ephys_folder,filesep,'neuron',num2str(neurons(un).phyID),'.png'),'png');
             end
-            p1 = histogram('BinEdges', ed./60 ,'BinCounts',  val_init,...
-                'displaystyle','stairs','linewidth',1.5, 'edgecolor',figProp.valid_clr,'LineStyle','-');
-            hold on
-            histogram('BinEdges', ed./60 ,'BinCounts',  val_init,...
-                'facecolor',figProp.valid_clr_fc ,'facealpha',0.3,'edgecolor','none')
-            p2 = histogram('BinEdges', ed2./60 ,'BinCounts',  inval_init,...
-                'displaystyle','stairs','linewidth',1.5, 'edgecolor',figProp.invalid_clr,'LineStyle','--');
-            histogram('BinEdges', ed2./60 ,'BinCounts',  inval_init,...
-                'facecolor',figProp.invalid_clr_fc ,'facealpha',0.3,'edgecolor','none')
-            ylim([0 maxBev+1]);
-            xlim([0 behavior_end_timelog/60])
-            ylabel('trial counts (3 min^{-1})','Color', figProp.spk_clr)
-            set(gca, 'YColor', figProp.valid_clr);
-            xlabel('time across session (min)');
-            ylim([0 maxBev+plen*2]);
-            if (maxFR<maxBev  || fr_plot==0)
-                patchY.pp = [maxBev+plen maxBev+(plen*2) maxBev+(plen*2) maxBev+plen];
-                patchY.rlc = [maxBev maxBev+plen maxBev+plen maxBev];
-                landmarks_plt = behavior_landmarks(behavior, figProp,patchY);
-            end
-            %     xlim([0 behavior.session_duration/60])
-            %     h2 = gca;
-            h2.XAxis.Visible = 'off';
-            title('Behavior and cell activity across the session')
-            lgd1 = legend([p1, p2], 'valid counts', 'invalid counts',...
-                'location','east','edgeColor', 'w');
-
-            % legend
-            axleg = nexttile(26);
-            lgd2=legend(axleg,landmarks_plt,...
-                'push','pull','left','right','center',...
-                'edgeColor','w','fontsize',10.5);
-            lgd2.Layout.Tile = 26;
-            set(axleg,'Visible', 'off');
-            ax1.Layout.TileSpan = [1, 4];
-
-
-
-            % --------------------------------------------------------------
-            % WAVWFORMS
-            axxx3 = nexttile;
-            axxx3.Layout.TileSpan = [2,2];
-
-            time_wf = (0:1/sp.sample_rate:(size(neurons(un).templateWaveforms,1)-1)/sp.sample_rate)*1000;
-            plot(time_wf,zero2nan(neurons(un).templateWaveforms(:,:)),'linewidth',1.5,'Color',[.8 .8 .8]);
-            hold on
-            for i = 1:length(neurons(un).templateID)
-                plot(time_wf,zero2nan(neurons(un).templateWaveforms(:,neurons(un).templatePeakCh(i))),...
-                    'linewidth',2,'Color',[.1 .1 .1 neurons(un).templateWeight(i)]);
-            end
-            hold off
-            set(gca,figProp.axeOpt{:})
-            xlabel('time (ms)'); ylabel('template waveform (pseudo-volts)')
-            str = 'Straight Line Plot from 1 to 10';
-            dim_ch=[0.85 0.12 0.1 0.1];
-            title('template waveform')
-            annotation('textbox',dim_ch,'String',...
-                sprintf('%s%s','channel = ',num2str(neurons(un).templatePeakCh)),...
-                'edgecolor','w','fontsize',10.5)
-
-            % --------------------------------------------------------------
-            % AMPLITUDE & FIRING RATE
-            ax2 = nexttile;
-            ax2.Layout.TileSpan = [1,4];
-            linkaxes([ax1, ax2], 'x');
-            lp = 0; % if we want to display the patches
-
-            % amplitude
-            AmpLimMax = ceil(max(neurons(un).amplitudes));
-            AmpLimMin = floor(min(neurons(un).amplitudes))-5;
-            %colororder({figProp.FR_clr,figProp.spk_clr(1:3)})
-            yyaxis left
-            amp_plt = plot((neurons(un).st-behav_start)./60,neurons(un).amplitudes,'.','Color', figProp.spk_clr);
-            hold on
-            ylim([0 AmpLimMax+lp]);
-            ylabel('amplitude (pseudo-volts)','Color', figProp.spk_clr)
-            set(gca,figProp.axeOpt{:})
-            set(gca,'YColor',figProp.spk_clr)
-
-            % firing rate
-            yyaxis right
-            histogram('BinEdges', neurons(un).edges_sess./60 ,'BinCounts',  neurons(un).FR_sess_mean,...
-                'displaystyle','stairs','linewidth',1.5, 'edgecolor',figProp.FR_clr)
-            histogram('BinEdges', neurons(un).edges_sess./60 ,'BinCounts',  neurons(un).FR_sess_mean,...
-                'facecolor',figProp.FR_clrFace ,'facealpha',0.6,'edgecolor','none')
-            maxFR = ceil(max(neurons(un).FR_sess_mean));
-            ylim([0 maxFR+(lp*2)]);
-            set(gca, 'YColor', figProp.spk_clr);
-            ylabel('mean firing rate (sp/s)','color', figProp.FR_clr)
-
-            maxY = max([maxFR AmpLimMax]);
-            patchY.extend = 1;
-            patchY.showPatch = 0;
-            landmarks_plt2 = behavior_landmarks(behavior, figProp,patchY);
-            xlim([0 behavior_end_timelog./60])
-            xlabel('time across session (min)');
-            set(gca, 'YColor', figProp.FR_clr);
-
-
-            % --------------------------------------------------------------
-            % AMPLITUDE HISTOGRAM
-            ax3 =nexttile;
-            nbins = 30;
-            histogram(neurons(un).amplitudes,nbins,'FaceColor',...
-                figProp.spk_clr_hist,'facealpha',.5);
-            xlim([0 AmpLimMax+6])
-            hax = gca;
-            hax.YDir = 'reverse';
-            camroll(90)
-            set(gca,figProp.axeOpt{:})
-            ylabel('density'); xlabel('amplitude');
-
-
-            set(gcf,'Position',[2078 49 1583 949],'color','w')
-            %drawnow;
-            % Save figure
-            saveas(gcf,strcat(out_ephys_folder,filesep,'neuron',num2str(neurons(un).phyID),'.png'),'png');
         end
     end
 end
@@ -713,4 +721,3 @@ fprintf('Done!!')
 
 
 
-    
