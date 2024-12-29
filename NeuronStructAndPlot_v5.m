@@ -4,34 +4,43 @@ clear; close all; clc
 %% Manage paths
 person = 'teresa';
 %person = 'simon';
-%person = 'srinidhi';
 if strcmp(person,'teresa')
     behavior_root ='D:\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\data\TD\behavior_data\raw_data';
-    ephys_root = 'E:\'; %group_ephys = '20230801_ChocolateGroup';
+    ephys_root = 'E:'; %group_ephys = '20230801_ChocolateGroup';
+    %ephys_root = 'D:\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\Data\TD\ephys_data\20230801_ChocolateGroup';
     %ephys_root = 'G:\ePhys\'; %group_ephys = '20230801_ChocolateGroup';
 elseif strcmp(person,'simon')
     behavior_root ='D:\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\data\TD\behavior_data\raw_data';
     ephys_root = 'C:\Users\SimonZ\Documents\Data\EPhys\DTATA_2CURATE'; %group_ephys = '20230801_ChocolateGroup';
-elseif strcmp(person,'srinidhi')
-    behavior_root ='C:\Users\srini\Learning Lab Dropbox\Learning Lab Team Folder\Patlab protocols\data\TD\behavior_data\raw_data';
-    ephys_root = 'D:\Srinidhi\'; %group_ephys = '20230801_ChocolateGroup';
 end
 group_setup_behav = strcat('20230511_ChocolateGroup',filesep,'headfixed_dynamicTarget');
 
 % IDs and Definitions
-mouse = '5_FerreroRocher';
+animals = {...
+    'CoteDor',...
+    'Lindt',...
+    'Toblerone',...
+    'Milka',...
+    'FerreroRocher'};
+animal_idx = 5;
+mouse = sprintf('%i_%s',animal_idx,animals{animal_idx});
+%ephys_root = strcat(ephys_root,filesep,mouse);
+
 paw_pref = 'right';
-session = 'R4';
-ephys_sess = '18082023_Ferrero_StrCer_S4_g0';
+session = 'R6';
+ephys_sess = '20082023_Ferrero_StrCer_S6_g0';
 imec_id = 1;
+
 %catGT_folder = 'catGT_KS_DSRemoved';
-catGT_folder = 'catGT\kilosort4';
-output_folder_name = 'neurons_overview_post';
+sorter_folder = 'catGT\kilosort4';
+%sorter_folder = 'ibl_sorter_results_driftAdapt';
+output_folder_name = 'neurons_overview_post_postPredictions2';
 
 % To run / save
-show_aux_plots = 0;
+show_aux_plots = 1;
 save_mat_flag = 1;
 plot_neuron_fig = 1;
+use_inferred_reach_times = 0;
 
 % Probe side: BG or CB
 if strcmp(paw_pref,'right')
@@ -44,22 +53,29 @@ elseif  strcmp(paw_pref,'left')
     end
 end
 
-% Path to load & save ------------------------------------------------
+%% Path to load & save ------------------------------------------------
 behavior_path = strcat(behavior_root,filesep,group_setup_behav,filesep,mouse,filesep,session);
 ephys_path = strcat(ephys_root,filesep,ephys_sess,filesep,ephys_sess,'_imec',num2str(imec_id));
 ephys_LFP_path = ephys_path;
-myKsDir = strcat(ephys_path,filesep,catGT_folder);
+myKsDir = strcat(ephys_path,filesep,sorter_folder);
 % path to save fig
 out_ephys_folder = strcat(myKsDir,filesep,output_folder_name);
 if ~exist(out_ephys_folder,'dir'), mkdir(out_ephys_folder); end
 % load behavior data
 load(strcat(behavior_path,filesep,'behavior_session.mat'));
 
-% load kilosort output with spikes
+% load kilosort output with spikes and metadata
 tic
 fprintf('Loading data...\n')
 sp = loadKSdir_TD(myKsDir);
+meta_ap = readSpikeGLXmeta(strcat(ephys_path,filesep,dir(fullfile(ephys_path,'*.ap.meta')).name));
+meta_lf = readSpikeGLXmeta(strcat(ephys_path,filesep,dir(fullfile(ephys_path,'*.lf.meta')).name));
 toc
+
+% save all session spikes and metadata
+neurons_params.sp = sp;
+neurons_params.sp = meta_ap;
+neurons_params.sp = meta_lf;
 
 %% Sync
 nChansInFile = 385;  % neuropixels phase3a, from spikeGLX
@@ -67,7 +83,7 @@ syncChanIndex = 385;
 tic
 syncDat = extractSyncChannel(ephys_LFP_path, nChansInFile, syncChanIndex);
 
-lfpFs = 2500;
+lfpFs = meta_lf.imSampRate;
 eventTimes = spikeGLXdigitalParse(syncDat, lfpFs);
 eventTimes_water_giv = eventTimes{7}{1};
 
@@ -100,15 +116,17 @@ if show_aux_plots
     hold off
 
     figure
-    subplot(311), plot(diff(eventTimes_water_giv));
-    subplot(312), plot(diff(eventTime_ind));
-    subplot(313), plot(diff(behavior.sync.time_newTrial_log));
+    subplot(411), plot(diff(eventTimes_water_giv));
+    subplot(412), plot(diff(eventTime_ind));
+    subplot(413), plot(diff(eventTimes_realTrial_harp));
+    subplot(414), plot(diff(behavior.sync.time_newTrial_log));
 
-    figure
-    plot(eventTimes_water_giv,behavior.sync.time_newTrial_log,'-'); hold on
-    plot(eventTimes_water_giv,behavior.sync.time_newTrial_log,'.');  hold off
-    ylabel('trial time on harp'); xlabel('trial time on ephys');
-
+    if  numel(eventTimes_realTrial_harp)==numel(behavior.sync.time_newTrial_log(2:end))
+        figure
+        plot(eventTimes_water_giv,behavior.sync.time_newTrial_log,'-'); hold on
+        plot(eventTimes_water_giv,behavior.sync.time_newTrial_log,'.');  hold off
+        ylabel('trial time on harp'); xlabel('trial time on ephys');
+    end
 
     figure
     plot(eventTimes_realTrial_ephys,eventTimes_realTrial_harp,'-'); hold on
@@ -220,6 +238,8 @@ for iUnit = 1:nOfUnits
     temp_neurons(iUnit).meta.recordedSession = session;
     temp_neurons(iUnit).meta.imecID = imec_id;
     temp_neurons(iUnit).meta.region = region;
+    temp_neurons(iUnit).meta.curator = person;
+    temp_neurons(iUnit).meta.use_inferred_reach_times = use_inferred_reach_times;
 
 end
 neurons = [neurons, temp_neurons];
@@ -233,7 +253,16 @@ trials_vec = 1:nr_trials;
 
 % events
 initiation_times = behavior.inputs.read_log(behavior.logs.trial_init_ind(trials_vec),1);
-reach_times =behavior.inputs.read_log(behavior.logs.reached_ind(trials_vec),1);
+% reach time already corrected for180 offset related to water collection detection
+if use_inferred_reach_times == 1
+    %reach_time_log = behavior.reach.timeof.reach_time_inferred(trials_vec);
+    reach_time_log = behavior.reach.timeof.reach_time_inferred_approxlog_corrected(trials_vec);
+    reach_times = reach_time_log +...
+        behavior.behavior_duration.time_start +...
+        behavior.inputs.timelog(1); % because times are related to session ready in the rwd collect correction
+else    
+    reach_times = behavior.reach.timeof.reach_time_corrected(trials_vec) + behavior.behavior_duration.time_start;
+end
 
 % idx
 push_idx = behavior.init.idx_trial_push(behavior.init.idx_trial_push<=nr_trials);
@@ -375,6 +404,8 @@ for un = 1: length(neurons)
         % Push and pull PSTH
         psth_push = mean(neurons(un).spk_rates_init(:,push_idx),2);
         psth_pull = mean(neurons(un).spk_rates_init(:,pull_idx),2);
+        if length(push_idx)<2, psth_push=nan(size(psth_push)); end
+        if length(pull_idx)<2, psth_pull=nan(psth_pull); end
         psth_push_sem = std(neurons(un).spk_rates_init(:,push_idx),[],2)./length(push_idx);
         psth_pull_sem = std(neurons(un).spk_rates_init(:,pull_idx),[],2)./length(pull_idx);
 
@@ -716,6 +747,7 @@ if save_mat_flag==1
     fprintf('Saving data...\n')
     save(strcat(myKsDir,filesep,'neurons_session'),'neurons',...
         'neurons_params','figProp','-v7.3');
+       %save(strcat(myKsDir,filesep,'neuronStruct_allVar'),'-v7.3');
 end
 fprintf('Done!!')
 

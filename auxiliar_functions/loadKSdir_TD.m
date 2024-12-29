@@ -10,7 +10,11 @@ if ~isfield(params, 'excludeNoise')
     params.excludeNoise = true;
 end
 
-params.loadPCs = true;
+if exist(fullfile(ksDir,'pc_features.npy'),'file')==0
+    params.loadPCs = false;
+else
+    params.loadPCs = true;
+end
 
 % load spike data
 % struct
@@ -71,6 +75,7 @@ elseif ~isempty(pcFeat)
     pcFeat(pcFeat<0) = 0; % some entries are negative, but we don't really want to push the CoM away from there.
     % which channels for each spike?
     spikeFeatInd = pcFeatInd(spikeTemplates+1,:);
+    
 
     % ycoords of those channels?
     spikeFeatYcoords = ycoords(spikeFeatInd+1); % 2D matrix of size #spikes x 12
@@ -92,6 +97,8 @@ if exist(fullfile(ksDir, 'cluster_group.tsv'))
 end 
 if exist(fullfile(ksDir, 'cluster_Extragood.tsv')) 
    cExtraGsFile = fullfile(ksDir, 'cluster_Extragood.tsv');
+else
+    cegs = zeros(size(unique(spikeTemplates)));
 end 
 
 if exist(fullfile(ksDir, 'cluster_CS.tsv')) 

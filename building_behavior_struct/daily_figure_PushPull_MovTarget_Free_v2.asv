@@ -30,7 +30,7 @@ flag_no_sync = 0;
 % DISPLAY LENGTH
 % Sherten session to display (discart unengaged trials)
 shorten_display = 1;
-last_trial_disp_time = 18; % minutes
+last_trial_disp_time = 30; % min
 %last_trial_disp = 95; % trial idx
 
 %% Path
@@ -600,10 +600,8 @@ patch_wd = 10;
 if (shorten_display == 1 && exist('last_trial_disp','var'))
     last_trial_disp_time = init_time(last_trial_disp);
 elseif (shorten_display == 1 && exist('last_trial_disp_time','var'))
-    last_trial_disp_time = last_trial_disp_time*60;
-    tmp_min = init_time-(last_trial_disp_time);
-    [~,last_trial_disp] =max(tmp_min(tmp_min<0));
-     
+    tmp_min = init_time-(last_trial_disp_time*60);
+    [last_trial_disp,~] =max(tmp_min(tmp_min<0));
 else
     last_trial_disp = nr_trials;
     last_trial_disp_time = session_duration;

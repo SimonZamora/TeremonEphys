@@ -6,7 +6,7 @@ clear; close all; clc
 %% Select dataset & probe
 % copy dataset fom local disk/cloud to SSD (ephys_root)
 %probe = '1'; %imec1
-probe = '1'; %imec0
+probe = '0'; %imec0
 run_catGT = 1;
 run_KS = 0;
 saveKS_to_matlab = 0;
@@ -17,8 +17,8 @@ tic
 %% Code and data paths - CHANGE ACCORDINGLY
 kilosort_root = 'C:\Users\Teresa\Documents\MATLAB\Kilosort-2.5'; % path to kilosort folder
 npy_root = 'C:\Users\Teresa\Documents\MATLAB\npy-matlab'; % path to npy folder
-catgt_root = 'C:\Users\Teresa\Documents\MATLAB\CatGTWinApp\CatGT-win'; % path to catGT folder
-ephys_root = 'F:\EPHYS_DATA'; % source data
+catgt_root = 'C:\Users\Teresa\Documents\CatGTWinApp\CatGT-win'; % path to catGT folder
+ephys_root = 'E:'; % source data
 pathToYourConfigFile = strcat(kilosort_root,filesep,'configFiles'); % path to config files
 
 % Add to path
@@ -26,7 +26,7 @@ addpath(genpath(kilosort_root))
 addpath(npy_root)
 
 % Find dataset in path
-ephys_folder = '25082023_Toblerone_StrCer_S3_g0';%'26082023_Lindt_StrCer_S4_g0';
+ephys_folder = '20082023_Ferrero_StrCer_S6_g0';%'26082023_Lindt_StrCer_S4_g0';
 %ephys_to_run = dir(ephys_root);
 %ephys_folder = ephys_to_run(4).name; %ephys_folder = ephys_to_run(3:end).name;
 run_name = ephys_folder(1:end-3); % date_mouse_recordingSite_session
